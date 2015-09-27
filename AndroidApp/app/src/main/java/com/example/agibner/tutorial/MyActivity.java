@@ -1,5 +1,12 @@
 package com.example.agibner.tutorial;
 
+import android.annotation.TargetApi;
+import android.content.Context;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.hardware.Sensor;
+import android.hardware.SensorManager;
 import android.os.Build;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -8,16 +15,23 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Button;
 
-import org.java_websocket.client.WebSocketClient;
-import org.java_websocket.handshake.ServerHandshake;
+import io.socket.client.IO;
+import io.socket.client.Socket;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 
 public class MyActivity extends AppCompatActivity {
-    WebSocketClient mWebSocketClient;
+    private Socket mSocket;
+    private SensorManager senSensorManager;
+    private Sensor senAccelerometer;
+
+
+
     private View.OnTouchListener myListener  = new View.OnTouchListener() {
         @Override
         public boolean onTouch(View view, MotionEvent me) {
@@ -29,39 +43,38 @@ public class MyActivity extends AppCompatActivity {
                     case MotionEvent.ACTION_DOWN:
                         switch (view.getId()) {
                             case R.id.red:
-                                mWebSocketClient.send("red,off");
-                                Log.i("sockets", "red off");
+                                mSocket.emit("colors", "red,on");
+
                                 break;
                             case R.id.blue:
-                                mWebSocketClient.send("blue,off");
-                                Log.i("sockets", "blue off");
+                                mSocket.emit("colors", "blue,on");
+
                                 break;
                             case R.id.green:
-                                mWebSocketClient.send("green,off");
-                                Log.i("sockets", "green off");
+                                mSocket.emit("colors", "green,on");
+
                                 break;
                             case R.id.yellow:
-                                mWebSocketClient.send("yellow,off");
-                                Log.i("sockets", "yellow off");
+                                mSocket.emit("colors", "yellow,on");
                                 break;
                         }
+                        break;
                     case MotionEvent.ACTION_UP:
                         switch (view.getId()) {
                             case R.id.red:
-                                //message
-                                mWebSocketClient.send("red,on");
-                                Log.i("sockets", "Red on");
+                                mSocket.emit("colors", "red,off");
+                                Log.i("sockets", "red on");
                                 break;
                             case R.id.blue:
-                                mWebSocketClient.send("blue,on");
+                                mSocket.emit("colors", "blue,off");
                                 Log.i("sockets", "blue on");
                                 break;
                             case R.id.green:
-                                mWebSocketClient.send("green,on");
+                                mSocket.emit("colors", "green,off");
                                 Log.i("sockets", "green on");
                                 break;
                             case R.id.yellow:
-                                mWebSocketClient.send("yellow,on");
+                                mSocket.emit("colors", "yellow,off");
                                 Log.i("sockets", "yellow on");
                                 break;
                         }
@@ -71,12 +84,21 @@ public class MyActivity extends AppCompatActivity {
         }
     };
 
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_my);
-        connectWebSocket();
 
+
+        try {
+            mSocket = IO.socket("http://10.145.210.252:8080");
+        } catch (URISyntaxException e) {
+            Log.i("sockets", "failed to connect");
+        }
+        mSocket.connect();
+
+        //Sets up touch handlers for all of the buttons
         Button green = (Button)findViewById(R.id.green);
         green.setOnTouchListener(myListener);
 
@@ -88,6 +110,7 @@ public class MyActivity extends AppCompatActivity {
 
         Button yellow = (Button)findViewById(R.id.yellow);
         yellow.setOnTouchListener(myListener);
+
     }
 
     @Override
@@ -112,40 +135,9 @@ public class MyActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-
-    private void connectWebSocket() {
-        URI uri;
-        Log.i("ConnectingWebSocket", "entering");
-        try {
-            uri = new URI("ws://echo.websocket.org");
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-            return;
-        }
-
-        mWebSocketClient = new WebSocketClient(uri) {
-            @Override
-            public void onOpen(ServerHandshake serverHandshake) {
-                Log.i("Websocket", "Opened");
-                mWebSocketClient.send("Hello from " + Build.MANUFACTURER + " " + Build.MODEL);
-            }
-
-            @Override
-            public void onMessage(String s) {
-                Log.i("Websocket", "Received Message " + s);
-            }
-
-            @Override
-            public void onClose(int i, String s, boolean b) {
-                Log.i("Websocket", "Closed " + s);
-            }
-
-            @Override
-            public void onError(Exception e) {
-                Log.i("Websocket", "Error " + e.getMessage());
-            }
-        };
-        mWebSocketClient.connect();
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        mSocket.disconnect();
     }
-
 }
