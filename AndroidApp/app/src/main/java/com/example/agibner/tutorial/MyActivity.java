@@ -6,8 +6,11 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Build;
+import android.os.Vibrator;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -29,8 +32,7 @@ public class MyActivity extends AppCompatActivity {
     private Socket mSocket;
     private SensorManager senSensorManager;
     private Sensor senAccelerometer;
-
-
+    private Vibrator myVib;
 
     private View.OnTouchListener myListener  = new View.OnTouchListener() {
         @Override
@@ -44,18 +46,19 @@ public class MyActivity extends AppCompatActivity {
                         switch (view.getId()) {
                             case R.id.red:
                                 mSocket.emit("colors", "red,on");
-
+                                myVib.vibrate(20);
                                 break;
                             case R.id.blue:
                                 mSocket.emit("colors", "blue,on");
-
+                                myVib.vibrate(20);
                                 break;
                             case R.id.green:
                                 mSocket.emit("colors", "green,on");
-
+                                myVib.vibrate(20);
                                 break;
                             case R.id.yellow:
                                 mSocket.emit("colors", "yellow,on");
+                                myVib.vibrate(20);
                                 break;
                         }
                         break;
@@ -89,6 +92,8 @@ public class MyActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_my);
+
+        myVib = (Vibrator) this.getSystemService(VIBRATOR_SERVICE);
 
 
         try {
